@@ -38,6 +38,14 @@ export default function DashboardLayout({
               </li>
               <li className="mb-2">
                 <Link
+                  href="/dashboard/summarycard"
+                  className="hover:text-blue-600"
+                >
+                  summary card
+                </Link>
+              </li>
+              <li className="mb-2">
+                <Link
                   href="/dashboard/comparison"
                   className="hover:text-blue-600"
                 >
@@ -66,13 +74,13 @@ export default function DashboardLayout({
         </aside>
 
         <main className="flex-1 p-4">{children}</main>
-        <aside className="w-64 bg-gray-50 p-4">
+        {/* <aside className="w-64 bg-gray-50 p-4">
           <h2 className="text-lg font-semibold mb-4">Updates</h2>
           <ul>
             <li className="mb-2">Filters</li>
             <li className="mb-2">Sliders</li>
           </ul>
-        </aside>
+        </aside> */}
       </div>
     </div>
   );

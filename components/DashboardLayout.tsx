@@ -38,6 +38,15 @@ export default function DashboardLayout({
               </li>
               <li className="mb-2">
                 <Link
+                  href="/dashboard/comparison"
+                  className="hover:text-blue-600"
+                >
+                  comparison
+                </Link>
+              </li>
+
+              <li className="mb-2">
+                <Link
                   href="/dashboard/categoricalplot"
                   className="hover:text-blue-600"
                 >

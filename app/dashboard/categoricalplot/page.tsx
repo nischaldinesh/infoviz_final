@@ -33,6 +33,7 @@ const AgeSlider = ({
 };
 
 // HeartDiseaseChart Component
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const HeartDiseaseChart = ({ data }: { data: any[] }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [selectedCPs, setSelectedCPs] = useState<number[]>([1, 2, 3, 4]);
@@ -47,6 +48,7 @@ const HeartDiseaseChart = ({ data }: { data: any[] }) => {
 
     const xScale = d3
       .scaleLinear()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .domain(d3.extent(data, (d: any) => d.thalach) as [number, number])
       .range([margin.left, width - margin.right]);
 
@@ -61,10 +63,12 @@ const HeartDiseaseChart = ({ data }: { data: any[] }) => {
       .range(["red", "blue", "green", "purple"]);
 
     const groupedData = d3
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .groups(data, (d: any) => d.cp)
       .filter(([cp]) => selectedCPs.includes(+cp));
 
     const areaGenerator = d3
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .area<any>()
       .x((d) => xScale(d.thalach))
       .y0(yScale(0))
@@ -74,7 +78,12 @@ const HeartDiseaseChart = ({ data }: { data: any[] }) => {
     svg
       .append("g")
       .attr("transform", `translate(0,${height - margin.bottom})`)
-      .call(d3.axisBottom(xScale).ticks(10).tickFormat((d) => d.toFixed(0)))
+      .call(
+        d3
+          .axisBottom(xScale)
+          .ticks(10)
+          .tickFormat((d) => (+d).toFixed(0))
+      )
       .selectAll("text")
       .style("font-size", "14px");
 
@@ -88,6 +97,7 @@ const HeartDiseaseChart = ({ data }: { data: any[] }) => {
     groupedData.forEach(([cp, values]) => {
       svg
         .append("path")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .datum(values.sort((a: any, b: any) => a.thalach - b.thalach))
         .attr("fill", colorScale(+cp))
         .attr("opacity", 0.5)
@@ -113,7 +123,10 @@ const HeartDiseaseChart = ({ data }: { data: any[] }) => {
         .attr("cx", 10)
         .attr("cy", i * 35)
         .attr("r", 7)
-        .attr("fill", selectedCPs.includes(cpNum) ? colorScale(cpNum) : "#D3D3D3")
+        .attr(
+          "fill",
+          selectedCPs.includes(cpNum) ? colorScale(cpNum) : "#D3D3D3"
+        )
         .attr("cursor", "pointer")
         .on("click", () => {
           setSelectedCPs((prev) =>
@@ -167,20 +180,25 @@ const HeartDiseaseChart = ({ data }: { data: any[] }) => {
 // Final Page Component
 const Page = () => {
   const [ageRange, setAgeRange] = useState<[number, number]>([30, 60]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any[]>([]);
 
   // Replace this with real fetch or prop in your app
   useEffect(() => {
-    d3.csv("/data/heart_visualization_final.csv", d3.autoType).then((loadedData) => {
-      console.log("RAW CSV Data Before Filtering:", loadedData);
-      setData(loadedData);
-    });
+    d3.csv("/data/heart_visualization_final.csv", d3.autoType).then(
+      (loadedData) => {
+        console.log("RAW CSV Data Before Filtering:", loadedData);
+        setData(loadedData);
+      }
+    );
   }, []);
 
   return (
     <div>
       <AgeSlider ageRange={ageRange} setAgeRange={setAgeRange} />
-      <HeartDiseaseChart data={data.filter((d) => d.age >= ageRange[0] && d.age <= ageRange[1])} />
+      <HeartDiseaseChart
+        data={data.filter((d) => d.age >= ageRange[0] && d.age <= ageRange[1])}
+      />
     </div>
   );
 };

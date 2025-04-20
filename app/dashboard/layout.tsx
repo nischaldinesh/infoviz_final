@@ -1,5 +1,10 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { DataProvider } from "./DataContext";
 
 export default function Dashboard({ children }: { children: React.ReactNode }) {
-  return <DashboardLayout>{children}</DashboardLayout>;
+  return (
+    <DataProvider>
+      <DashboardLayout>{children}</DashboardLayout>
+    </DataProvider>
+  );
 }

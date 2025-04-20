@@ -1,7 +1,9 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import Papa from "papaparse";
 import * as d3 from "d3";
+import { useData } from "../DataContext";
 
 interface DataPoint {
   age: number;
@@ -11,99 +13,77 @@ interface DataPoint {
   num: number;
 }
 
-const SummaryVisualization = () => {
+export default function SummaryVisualization() {
+  const { rawCsv } = useData();
   const [data, setData] = useState<DataPoint[]>([]);
-  const dataFiles = [
-    { label: "Cleveland", path: "/data/processed.cleveland.csv" },
-    { label: "Hungarian", path: "/data/processed.hungarian.csv" },
-    { label: "Switzerland", path: "/data/processed.switzerland.csv" },
-  ];
-  const [selectedDataset, setSelectedDataset] = useState<string>(
-    dataFiles[0].path
-  );
 
   const [selectedCp, setSelectedCp] = useState<number>(1);
-
   const cholRanges = [
     { label: "Below 150", min: 0, max: 150 },
-    { label: "150-200", min: 150, max: 200 },
-    { label: "200-250", min: 200, max: 250 },
-    { label: "250-300", min: 250, max: 300 },
-    { label: "300-350", min: 300, max: 350 },
-    { label: "350-400", min: 350, max: 400 },
+    { label: "150–200", min: 150, max: 200 },
+    { label: "200–250", min: 200, max: 250 },
+    { label: "250–300", min: 250, max: 300 },
+    { label: "300–350", min: 300, max: 350 },
+    { label: "350–400", min: 350, max: 400 },
   ];
-
   const [selectedCholRanges, setSelectedCholRanges] = useState<number[]>([
     0, 1, 2, 3, 4, 5,
   ]);
 
-  const loadCSV = async (): Promise<void> => {
-    const response = await fetch(selectedDataset);
-    const csvText = await response.text();
-    const parsed = Papa.parse<string[]>(csvText, {
+  useEffect(() => {
+    if (!rawCsv) {
+      setData([]);
+      return;
+    }
+    const parsed = Papa.parse<string[]>(rawCsv, {
       header: false,
       skipEmptyLines: true,
     });
-    const parsedData: DataPoint[] = (parsed.data as string[][]).map(
-      (row: string[]) => ({
-        age: +row[0],
-        cp: +row[2],
-        chol: +row[4],
-        thalach: +row[7],
-        num: +row[13],
-      })
+    const asData: DataPoint[] = (parsed.data as string[][]).map((row) => ({
+      age: +row[0],
+      cp: +row[2],
+      chol: +row[4],
+      thalach: +row[7],
+      num: +row[13],
+    }));
+    setData(asData);
+  }, [rawCsv]);
+
+  const inSelectedChol = (c: number) =>
+    selectedCholRanges.some(
+      (i) => c >= cholRanges[i].min && c < cholRanges[i].max
     );
-    setData(parsedData);
-  };
 
-  useEffect(() => {
-    loadCSV();
-  }, [selectedDataset]);
-
-  const belongsToSelectedCholRange = (chol: number): boolean => {
-    return selectedCholRanges.some(
-      (i) => chol >= cholRanges[i].min && chol < cholRanges[i].max
-    );
-  };
-
-  const filteredData = data.filter(
-    (d) => d.cp === selectedCp && belongsToSelectedCholRange(d.chol)
+  const filtered = data.filter(
+    (d) => d.cp === selectedCp && inSelectedChol(d.chol)
   );
+  const noDisease = filtered.filter((d) => d.num === 0);
+  const yesDisease = filtered.filter((d) => d.num === 1);
 
-  const groupNo = filteredData.filter((d) => d.num === 0);
-  const groupYes = filteredData.filter((d) => d.num === 1);
-
-  const computeStats = (arr: DataPoint[]) => {
-    const count = arr.length;
-    const avgChol = count ? d3.mean(arr, (d) => d.chol) : NaN;
-    const avgAge = count ? d3.mean(arr, (d) => d.age) : NaN;
-    const avgThalach = count ? d3.mean(arr, (d) => d.thalach) : NaN;
+  const compute = (arr: DataPoint[]) => {
+    const cnt = arr.length;
     return {
-      count,
-      avgChol: avgChol ? avgChol.toFixed(1) : "N/A",
-      avgAge: avgAge ? avgAge.toFixed(1) : "N/A",
-      avgThalach: avgThalach ? avgThalach.toFixed(1) : "N/A",
+      count: cnt,
+      avgChol: cnt ? d3.mean(arr, (d) => d.chol)!.toFixed(1) : "N/A",
+      avgAge: cnt ? d3.mean(arr, (d) => d.age)!.toFixed(1) : "N/A",
+      avgThalach: cnt ? d3.mean(arr, (d) => d.thalach)!.toFixed(1) : "N/A",
     };
   };
+  const statsNo = compute(noDisease);
+  const statsYes = compute(yesDisease);
 
-  const statsNo = computeStats(groupNo);
-  const statsYes = computeStats(groupYes);
-
-  const handleDatasetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedDataset(e.target.value);
-  };
-
-  const handleCpChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCp(Number(e.target.value));
-  };
-
-  const handleCholCheckboxChange = (index: number, checked: boolean) => {
-    if (checked) {
-      setSelectedCholRanges((prev) => [...prev, index]);
-    } else {
-      setSelectedCholRanges((prev) => prev.filter((i) => i !== index));
-    }
-  };
+  if (!rawCsv) {
+    return (
+      <div className="p-10 text-center">
+        <h2 className="text-2xl font-bold mb-4">
+          Upload a CSV to see the summary
+        </h2>
+        <p className="text-gray-600">
+          Use the “Upload Your CSV” control in the sidebar to load your data.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-10 min-h-screen">
@@ -113,50 +93,37 @@ const SummaryVisualization = () => {
 
       <div className="mb-6 flex flex-col md:flex-row items-center justify-center gap-6">
         <div>
-          <label className="mr-2 font-medium text-lg">Select Dataset:</label>
-          <select
-            value={selectedDataset}
-            onChange={handleDatasetChange}
-            className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring focus:ring-blue-200 transition"
-          >
-            {dataFiles.map((file) => (
-              <option key={file.path} value={file.path}>
-                {file.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
           <label className="mr-2 font-medium text-lg">Chest Pain Type:</label>
           <select
             value={selectedCp}
-            onChange={handleCpChange}
+            onChange={(e) => setSelectedCp(+e.target.value)}
             className="border border-gray-300 rounded-md p-2 focus:outline-none focus:ring focus:ring-blue-200 transition"
           >
             <option value={1}>Typical Angina</option>
             <option value={2}>Atypical Angina</option>
-            <option value={3}>Non-anginal Pain</option>
+            <option value={3}>Non‑anginal Pain</option>
             <option value={4}>Asymptomatic</option>
           </select>
         </div>
-
         <div>
           <label className="mr-2 font-medium text-lg">
             Cholesterol Ranges:
           </label>
           <div className="flex flex-wrap gap-2">
-            {cholRanges.map((range, index) => (
-              <label key={index} className="flex items-center">
+            {cholRanges.map((r, i) => (
+              <label key={i} className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={selectedCholRanges.includes(index)}
-                  onChange={(e) =>
-                    handleCholCheckboxChange(index, e.target.checked)
-                  }
+                  checked={selectedCholRanges.includes(i)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setSelectedCholRanges((prev) =>
+                      checked ? [...prev, i] : prev.filter((x) => x !== i)
+                    );
+                  }}
                   className="mr-1"
                 />
-                <span className="text-sm">{range.label}</span>
+                <span className="text-sm">{r.label}</span>
               </label>
             ))}
           </div>
@@ -174,7 +141,7 @@ const SummaryVisualization = () => {
                 <th className="px-4 py-2 text-left font-bold">Group</th>
                 <th className="px-4 py-2 text-left font-bold">Patient Count</th>
                 <th className="px-4 py-2 text-left font-bold">
-                  Avg. Cholesterol (mg/dL)
+                  Avg. Chol (mg/dL)
                 </th>
                 <th className="px-4 py-2 text-left font-bold">
                   Avg. Age (yrs)
@@ -208,12 +175,10 @@ const SummaryVisualization = () => {
         </div>
         <div className="mt-4 text-center">
           <p className="font-bold">
-            Total Patients (Matching Filters): {filteredData.length}
+            Total Patients (Matching Filters): {filtered.length}
           </p>
         </div>
       </div>
     </div>
   );
-};
-
-export default SummaryVisualization;
+}

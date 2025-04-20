@@ -33,7 +33,7 @@ export default function DashboardLayout({
                   href="/dashboard/scatterplot"
                   className="hover:text-blue-600"
                 >
-                  scatterplot
+                  BP vs Cholesterol
                 </Link>
               </li>
               <li className="mb-2">
@@ -41,7 +41,7 @@ export default function DashboardLayout({
                   href="/dashboard/summarycard"
                   className="hover:text-blue-600"
                 >
-                  summary card
+                  Chest Pain Types
                 </Link>
               </li>
 

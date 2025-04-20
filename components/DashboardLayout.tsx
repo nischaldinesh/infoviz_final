@@ -8,14 +8,14 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="min-h-screen flex flex-col">
-      <header className=" p-4">
+      <header className="bg-gray-100 p-4 items-center justify-center flex">
         <h1 className="text-2xl font-bold text-black">
-          Dashboard: Exploring the Prevalence of Heart Diseases
+          Dashboard: &quot;Exploring the Prevalence of Heart Diseases&quot;
         </h1>
       </header>
 
       <div className="flex flex-1">
-        <aside className="w-64 bg-gray-100 p-4">
+        <aside className="w-44 bg-gray-100 p-4">
           <div className="mb-8 flex justify-center">
             <Link href="/">
               <Image
@@ -42,14 +42,6 @@ export default function DashboardLayout({
                   className="hover:text-blue-600"
                 >
                   summary card
-                </Link>
-              </li>
-              <li className="mb-2">
-                <Link
-                  href="/dashboard/comparison"
-                  className="hover:text-blue-600"
-                >
-                  comparison
                 </Link>
               </li>
 

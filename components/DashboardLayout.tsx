@@ -62,8 +62,11 @@ export default function DashboardLayout({
                 </Link>
               </li>
               <li className="mb-2">
-                <Link href="/dashboard/grouped" className="hover:text-blue-600">
-                  Grouped
+                <Link
+                  href="/dashboard/patterns"
+                  className="hover:text-blue-600"
+                >
+                  Patterns
                 </Link>
               </li>
             </ul>

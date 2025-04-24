@@ -8,6 +8,7 @@ export interface DataPoint {
   sex: number;
   restbps: number;
   chol: number;
+  thalach: number;
   diag: number;
 }
 
@@ -45,6 +46,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       sex: r[1],
       restbps: r[3],
       chol: r[4],
+      thalach: r[7],
       diag: r[13],
     }));
 

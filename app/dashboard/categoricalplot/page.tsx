@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { Slider, Typography } from "@mui/material";
@@ -16,17 +17,24 @@ const AgeSlider = ({
   };
 
   return (
-    <div>
-      <Typography>
+    <div
+      style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+    >
+      <Typography
+        variant="subtitle1"
+        style={{ marginBottom: "10px", fontWeight: "bold" }}
+      >
         Age Range: {ageRange[0]} - {ageRange[1]}
       </Typography>
       <Slider
         value={ageRange}
         onChange={handleChange}
         min={20}
-        max={80}
+        max={70}
         step={1}
+        orientation="vertical"
         valueLabelDisplay="auto"
+        style={{ height: "300px" }}
       />
     </div>
   );
@@ -42,13 +50,12 @@ const HeartDiseaseChart = ({ data }: { data: any[] }) => {
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const width = 900,
-      height = 500,
-      margin = { top: 40, right: 100, bottom: 60, left: 80 };
+    const width = 900;
+    const height = 500;
+    const margin = { top: 40, right: 120, bottom: 60, left: 80 };
 
     const xScale = d3
       .scaleLinear()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .domain(d3.extent(data, (d: any) => d.thalach) as [number, number])
       .range([margin.left, width - margin.right]);
 
@@ -63,18 +70,17 @@ const HeartDiseaseChart = ({ data }: { data: any[] }) => {
       .range(["red", "blue", "green", "purple"]);
 
     const groupedData = d3
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .groups(data, (d: any) => d.cp)
       .filter(([cp]) => selectedCPs.includes(+cp));
 
     const areaGenerator = d3
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .area<any>()
       .x((d) => xScale(d.thalach))
       .y0(yScale(0))
       .y1((d) => yScale(d.num))
       .curve(d3.curveBasis);
 
+    // Axis
     svg
       .append("g")
       .attr("transform", `translate(0,${height - margin.bottom})`)
@@ -82,7 +88,7 @@ const HeartDiseaseChart = ({ data }: { data: any[] }) => {
         d3
           .axisBottom(xScale)
           .ticks(10)
-          .tickFormat((d) => (+d).toFixed(0))
+          .tickFormat((d) => (d as number).toFixed(0))
       )
       .selectAll("text")
       .style("font-size", "14px");
@@ -94,26 +100,27 @@ const HeartDiseaseChart = ({ data }: { data: any[] }) => {
       .selectAll("text")
       .style("font-size", "14px");
 
+    // Area Paths
     groupedData.forEach(([cp, values]) => {
       svg
         .append("path")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .datum(values.sort((a: any, b: any) => a.thalach - b.thalach))
         .attr("fill", colorScale(+cp))
         .attr("opacity", 0.5)
         .attr("d", areaGenerator);
     });
 
-    const legend = svg
-      .append("g")
-      .attr("transform", `translate(${width - 220}, 50)`);
-
+    // Legend
     const cpNames: Record<number, string> = {
       1: "Typical Angina",
       2: "Atypical Angina",
       3: "Non-Anginal Pain",
       4: "Asymptomatic",
     };
+
+    const legend = svg
+      .append("g")
+      .attr("transform", `translate(${width - 220}, 50)`);
 
     Object.entries(cpNames).forEach(([cp, name], i) => {
       const cpNum = +cp;
@@ -154,6 +161,7 @@ const HeartDiseaseChart = ({ data }: { data: any[] }) => {
         });
     });
 
+    // Axis Labels
     svg
       .append("text")
       .attr("x", width / 2)
@@ -161,7 +169,7 @@ const HeartDiseaseChart = ({ data }: { data: any[] }) => {
       .attr("text-anchor", "middle")
       .style("font-size", "20px")
       .style("font-weight", "bold")
-      .text("Max Heart Rate (Thalach)");
+      .text("Max Heart Rate");
 
     svg
       .append("text")
@@ -177,28 +185,82 @@ const HeartDiseaseChart = ({ data }: { data: any[] }) => {
   return <svg ref={svgRef} width={900} height={500}></svg>;
 };
 
-// Final Page Component
+// Page Component
 const Page = () => {
   const [ageRange, setAgeRange] = useState<[number, number]>([30, 60]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any[]>([]);
 
-  // Replace this with real fetch or prop in your app
   useEffect(() => {
-    d3.csv("/data/heart_visualization_final.csv", d3.autoType).then(
-      (loadedData) => {
-        console.log("RAW CSV Data Before Filtering:", loadedData);
-        setData(loadedData);
-      }
-    );
+    const columnNames = [
+      "age",
+      "sex",
+      "cp",
+      "trestbps",
+      "chol",
+      "fbs",
+      "restecg",
+      "thalach",
+      "exang",
+      "oldpeak",
+      "slope",
+      "ca",
+      "thal",
+      "num",
+    ];
+
+    const parseCSV = (text: string) =>
+      text
+        .trim()
+        .split("\n")
+        .map((line) => {
+          const values = line.split(",");
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const row: any = {};
+          columnNames.forEach((col, idx) => {
+            row[col] = +values[idx];
+          });
+          return row;
+        });
+
+    d3.text("/data/processed.cleveland.csv").then((clevelandText) => {
+      const cleveland = parseCSV(clevelandText);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const isValid = (d: any) =>
+        !isNaN(d.age) &&
+        !isNaN(d.cp) &&
+        !isNaN(d.thalach) &&
+        !isNaN(d.num) &&
+        [1, 2, 3, 4].includes(d.cp) &&
+        d.num >= 0 &&
+        d.num <= 4;
+
+      setData(cleveland.filter(isValid));
+    });
   }, []);
 
   return (
-    <div>
-      <AgeSlider ageRange={ageRange} setAgeRange={setAgeRange} />
-      <HeartDiseaseChart
-        data={data.filter((d) => d.age >= ageRange[0] && d.age <= ageRange[1])}
-      />
+    <div style={{ padding: "20px", textAlign: "center" }}>
+      <Typography variant="h5" gutterBottom>
+        Heart Disease Severity vs. Max Heart Rate by Chest Pain Type
+      </Typography>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: "40px",
+          paddingTop: "30px",
+        }}
+      >
+        <HeartDiseaseChart
+          data={data.filter(
+            (d) => d.age >= ageRange[0] && d.age <= ageRange[1]
+          )}
+        />
+        <AgeSlider ageRange={ageRange} setAgeRange={setAgeRange} />
+      </div>
     </div>
   );
 };

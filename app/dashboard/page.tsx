@@ -53,6 +53,8 @@ export default function UploadPage() {
 
   return (
     <div>
+      <h1 style={{ color: "red", fontWeight: "bold" }}>Data Description</h1>
+
       <div className="grid grid-cols-2 gap-x-8 mb-6">
         <div className="space-y-2">
           {firstHalf.map(({ key, desc }) => (

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-
+import { FaDatabase } from "react-icons/fa6";
 export default function DashboardLayout({
   children,
 }: {
@@ -30,6 +30,14 @@ export default function DashboardLayout({
             <ul>
               <li className="mb-2">
                 <Link
+                  href="/dashboard/"
+                  className="hover:text-blue-60 flex flex-row gap-2"
+                >
+                  <FaDatabase /> Upload Data
+                </Link>
+              </li>
+              <li className="mb-2">
+                <Link
                   href="/dashboard/scatterplot"
                   className="hover:text-blue-600"
                 >
@@ -50,15 +58,20 @@ export default function DashboardLayout({
                   href="/dashboard/categoricalplot"
                   className="hover:text-blue-600"
                 >
-                  categoricalplot
+                  Heart Severity
                 </Link>
               </li>
               <li className="mb-2">
                 <Link
-                  href="/dashboard/heatmaps"
+                  href="/dashboard/patterns"
                   className="hover:text-blue-600"
                 >
-                  heatmaps
+                  Patterns
+                </Link>
+              </li>
+              <li className="mb-2">
+                <Link href="/dashboard/grouped" className="hover:text-blue-600">
+                  Grouped
                 </Link>
               </li>
             </ul>

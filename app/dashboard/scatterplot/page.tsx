@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
@@ -12,14 +13,17 @@ export default function Page() {
   useEffect(() => {
     if (!data.length) return;
 
+    // clear old
     d3.select(scatterRef.current).selectAll("*").remove();
     d3.select(pieRef.current).selectAll("*").remove();
     d3.select(barRef.current).selectAll("*").remove();
 
+    // margins & dims (extra bottom space unused now)
     const margin = { top: 10, right: 30, bottom: 50, left: 60 };
     const width = 460 - margin.left - margin.right;
     const height = 400 - margin.top - margin.bottom;
 
+    // scatter svg
     const svgScatter = d3
       .select(scatterRef.current)
       .append("svg")
@@ -28,25 +32,26 @@ export default function Page() {
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
+    // scales
     const xScale = d3
       .scaleLinear()
       .domain(d3.extent(data, (d) => d.restbps) as [number, number])
       .range([0, width])
       .nice();
-
     const yScale = d3
       .scaleLinear()
       .domain(d3.extent(data, (d) => d.chol) as [number, number])
       .range([height, 0])
       .nice();
 
+    // axes
     svgScatter
       .append("g")
       .attr("transform", `translate(0,${height})`)
       .call(d3.axisBottom(xScale));
-
     svgScatter.append("g").call(d3.axisLeft(yScale));
 
+    // axis labels
     svgScatter
       .append("text")
       .attr("x", width / 2)
@@ -64,11 +69,14 @@ export default function Page() {
       .style("font-size", "14px")
       .text("Cholesterol (mg/dl)");
 
+    // color scale by diag
+    const diagKeys = Array.from(new Set(data.map((d) => d.diag.toString())));
     const scatterColor = d3
       .scaleOrdinal<string>()
-      .domain([...new Set(data.map((d) => d.diag.toString()))])
+      .domain(diagKeys)
       .range(d3.schemeCategory10);
 
+    // draw points
     svgScatter
       .append("g")
       .selectAll("circle")
@@ -81,6 +89,7 @@ export default function Page() {
       .style("fill", (d) => scatterColor(d.diag.toString()))
       .style("opacity", 0.6);
 
+    // brush
     const brush = d3
       .brush()
       .extent([
@@ -104,20 +113,50 @@ export default function Page() {
         renderPie(filtered);
         renderBar(filtered);
       });
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     svgScatter.append("g").call(brush as any);
 
+    // ─── legend (top-right, vertical list) ─────────────────────────────────
+    const diagLabels: Record<string, string> = {
+      "0": "No Heart Disease",
+      "1": "Mild Disease",
+      "2": "Moderate Disease",
+      "3": "Severe Disease",
+      "4": "Critical Disease",
+    };
+    const legendX = width - 120;
+    const legendY = 0;
+    const legend = svgScatter
+      .append("g")
+      .attr("transform", `translate(${legendX},${legendY})`);
+
+    diagKeys.forEach((key, i) => {
+      const yPos = i * 20;
+      legend
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", yPos)
+        .attr("width", 12)
+        .attr("height", 12)
+        .attr("fill", scatterColor(key));
+      legend
+        .append("text")
+        .attr("x", 18)
+        .attr("y", yPos + 10)
+        .attr("alignment-baseline", "middle")
+        .style("font-size", "12px")
+        .text(diagLabels[key] || `Diag ${key}`);
+    });
+
+    // initial pie & bar
     renderPie(data);
     renderBar(data);
 
     function renderPie(dataset: DataPoint[]) {
       d3.select(pieRef.current).selectAll("*").remove();
-
-      const size = 300;
-      const legendHeight = 30;
-      const radius = size / 2;
-
+      const size = 300,
+        legendHeight = 30,
+        radius = size / 2;
       const svgPie = d3
         .select(pieRef.current)
         .append("svg")
@@ -132,7 +171,6 @@ export default function Page() {
           "transform",
           `translate(${-radius},${-radius - legendHeight + 5})`
         );
-
       ["Male", "Female"].forEach((sex, i) => {
         legend
           .append("rect")
@@ -145,11 +183,9 @@ export default function Page() {
           .append("text")
           .attr("x", i * 100 + 15)
           .attr("y", 10)
-          .attr("text-anchor", "start")
           .style("font-size", "12px")
           .text(sex);
       });
-
       const counts = d3.rollup(
         dataset,
         (v) => v.length,
@@ -158,31 +194,24 @@ export default function Page() {
       const entries = Array.from(counts.entries());
       const total = d3.sum(entries, ([, v]) => v);
       const pieData = d3.pie<[number, number]>().value((d) => d[1])(entries);
-
       const slices = svgPie.append("g");
-
       const arcGen = d3
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .arc<any>()
         .innerRadius(0)
         .outerRadius(radius - 10);
-
       const pieColor = d3
         .scaleOrdinal<string>()
         .domain(["Male", "Female"])
         .range(d3.schemeCategory10);
-
       slices
         .selectAll("path")
         .data(pieData)
         .enter()
         .append("path")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .attr("d", arcGen as any)
         .attr("fill", (d) => pieColor(d.data[0] === 1 ? "Male" : "Female"))
         .attr("stroke", "#fff")
         .style("stroke-width", "1px");
-
       slices
         .selectAll("text")
         .data(pieData)
@@ -198,11 +227,9 @@ export default function Page() {
 
     function renderBar(dataset: DataPoint[]) {
       d3.select(barRef.current).selectAll("*").remove();
-
       const mb = { top: 20, right: 20, bottom: 50, left: 60 };
       const w = 400 - mb.left - mb.right;
       const h = 300 - mb.top - mb.bottom;
-
       const svgBar = d3
         .select(barRef.current)
         .append("svg")
@@ -210,7 +237,6 @@ export default function Page() {
         .attr("height", h + mb.top + mb.bottom)
         .append("g")
         .attr("transform", `translate(${mb.left},${mb.top})`);
-
       const bins = [25, 35, 45, 55, 70, 100];
       const groups = bins.slice(0, -1).map((_, i) => {
         const low = bins[i],
@@ -220,25 +246,21 @@ export default function Page() {
           count: dataset.filter((d) => d.age >= low && d.age < high).length,
         };
       });
-
       const xBand = d3
         .scaleBand<string>()
         .domain(groups.map((g) => g.range))
         .range([0, w])
         .padding(0.2);
-
       const yLin = d3
         .scaleLinear()
         .domain([0, d3.max(groups, (g) => g.count)!])
         .range([h, 0])
         .nice();
-
       svgBar
         .append("g")
         .attr("transform", `translate(0,${h})`)
         .call(d3.axisBottom(xBand));
       svgBar.append("g").call(d3.axisLeft(yLin));
-
       svgBar
         .append("text")
         .attr("x", w / 2)
@@ -246,7 +268,6 @@ export default function Page() {
         .attr("text-anchor", "middle")
         .style("font-size", "12px")
         .text("Age Range");
-
       svgBar
         .append("text")
         .attr("transform", "rotate(-90)")
@@ -255,7 +276,6 @@ export default function Page() {
         .attr("text-anchor", "middle")
         .style("font-size", "12px")
         .text("Count");
-
       svgBar
         .selectAll("rect")
         .data(groups)
@@ -266,7 +286,6 @@ export default function Page() {
         .attr("width", xBand.bandwidth())
         .attr("height", (d) => h - yLin(d.count))
         .attr("fill", d3.schemeCategory10[2]);
-
       svgBar
         .selectAll("text.count")
         .data(groups)
@@ -282,8 +301,7 @@ export default function Page() {
 
   if (!data.length) {
     return (
-      <div className="p-10">
-        <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+      <div className="p-10 text-gray-600">
         <p>No data uploaded. Please upload a CSV via the sidebar.</p>
       </div>
     );

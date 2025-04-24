@@ -64,9 +64,15 @@ export default function SummaryVisualization() {
     const cnt = arr.length;
     return {
       count: cnt,
-      avgChol: cnt ? d3.mean(arr, (d) => d.chol)!.toFixed(1) : "N/A",
-      avgAge: cnt ? d3.mean(arr, (d) => d.age)!.toFixed(1) : "N/A",
-      avgThalach: cnt ? d3.mean(arr, (d) => d.thalach)!.toFixed(1) : "N/A",
+      avgChol: cnt
+        ? Math.ceil(parseFloat(d3.mean(arr, (d) => d.chol)!.toFixed(1)))
+        : "N/A",
+      avgAge: cnt
+        ? Math.ceil(parseFloat(d3.mean(arr, (d) => d.age)!.toFixed(1)))
+        : "N/A",
+      avgThalach: cnt
+        ? Math.ceil(parseFloat(d3.mean(arr, (d) => d.thalach)!.toFixed(1)))
+        : "N/A",
     };
   };
   const statsNo = compute(noDisease);
@@ -74,12 +80,9 @@ export default function SummaryVisualization() {
 
   if (!rawCsv) {
     return (
-      <div className="p-10 text-center">
-        <h2 className="text-2xl font-bold mb-4">
-          Upload a CSV to see the summary
-        </h2>
+      <div className="p-10">
         <p className="text-gray-600">
-          Use the “Upload Your CSV” control in the sidebar to load your data.
+          No data uploaded. Please upload a CSV via the sidebar.
         </p>
       </div>
     );
@@ -88,7 +91,7 @@ export default function SummaryVisualization() {
   return (
     <div className="p-10 min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-center">
-        Data Summary Dashboard
+        Chest Pain Types Metrics
       </h1>
 
       <div className="mb-6 flex flex-col md:flex-row items-center justify-center gap-6">
@@ -105,7 +108,8 @@ export default function SummaryVisualization() {
             <option value={4}>Asymptomatic</option>
           </select>
         </div>
-        <div>
+
+        <div className="flex flex-row">
           <label className="mr-2 font-medium text-lg">
             Cholesterol Ranges:
           </label>
